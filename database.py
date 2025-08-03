@@ -69,6 +69,23 @@ def search_images_by_tag(query):
     conn.close()
     return images
 
+def get_available_years():
+    """Returns a sorted list of distinct years from the database."""
+    conn = get_db_connection()
+    # SUBSTR(date_taken, 1, 4) extracts the year from 'YYYY-MM-DD...'
+    years = conn.execute("SELECT DISTINCT SUBSTR(date_taken, 1, 4) as year FROM images ORDER BY year DESC").fetchall()
+    conn.close()
+    return [row['year'] for row in years]
+
+def get_images_by_year(year):
+    """Fetches all images from the database for a specific year."""
+    conn = get_db_connection()
+    # Using LIKE to match the start of the date_taken string
+    year_pattern = f"{year}%"
+    images = conn.execute("SELECT * FROM images WHERE date_taken LIKE ? ORDER BY date_taken ASC", (year_pattern,)).fetchall()
+    conn.close()
+    return images
+
 def insert_image(image_data):
     """Inserts a new image record into the database."""
     conn = get_db_connection()

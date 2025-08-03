@@ -6,8 +6,18 @@ import threading
 import llm_processor
 import scanner
 
+from datetime import datetime
+
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' # Needed for flash messaging
+
+# Custom Jinja2 filter for parsing date strings
+def
+
+strptime(date_string, format):
+    return datetime.strptime(date_string, format)
+
+app.jinja_env.filters['strptime'] = strptime
 
 CONFIG_FILE = 'config.txt'
 IMAGE_DIR = ''
@@ -45,16 +55,30 @@ def index():
     if not IMAGE_DIR:
         return redirect(url_for('setup'))
 
-    search_query = request.args.get('query')
-    if search_query:
-        images = database.search_images_by_tag(search_query)
-    else:
-        images = database.get_all_images(sort_by='date_taken', order='desc')
+    available_years = database.get_available_years()
+    selected_year = request.args.get('year', None)
 
-    return render_template('index.html', images=images)
+    if not selected_year and available_years:
+        # Default to the most recent year if none is selected
+        selected_year = available_years[0]
+
+    images = []
+    if selected_year:
+        images = database.get_images_by_year(selected_year)
+
+    return render_template('index.html', images=images, available_years=available_years, selected_year=selected_year)
 
 THUMBNAIL_DIR = 'static/thumbnails'
 THUMBNAIL_SIZE = (200, 150)
+
+@app.route('/search')
+def search():
+    search_query = request.args.get('query')
+    images = None
+    if search_query:
+        images = database.search_images_by_tag(search_query)
+
+    return render_template('search.html', images=images)
 
 @app.route('/image/<int:image_id>')
 def image_viewer(image_id):
