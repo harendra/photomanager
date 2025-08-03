@@ -49,7 +49,7 @@ def setup():
             save_config()
             flash('Configuration saved! Starting initial scan in the background...', 'success')
 
-            scan_thread = threading.Thread(target=scanner.scan_directory, args=(IMAGE_DIRS,), daemon=True)
+            scan_thread = threading.Thread(target=scanner.scan_directories, args=(IMAGE_DIRS,), daemon=True)
             scan_thread.start()
 
             return redirect(url_for('index'))
