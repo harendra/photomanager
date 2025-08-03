@@ -17,6 +17,11 @@ def strptime_filter(date_string, format):
 
 app.jinja_env.filters['strptime'] = strptime_filter
 
+def strftime_filter(date_obj, format):
+    return date_obj.strftime(format)
+
+app.jinja_env.filters['strftime'] = strftime_filter
+
 CONFIG_FILE = 'config.txt'
 IMAGE_DIR = ''
 
