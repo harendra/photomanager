@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, request, redirect, url_for, flash
+from flask import Flask, render_template, send_from_directory, request, redirect, url_for, flash, jsonify
 import database
 import os
 from PIL import Image
@@ -91,21 +91,29 @@ def search():
 
     return render_template('search.html', images=images)
 
-@app.route('/image/<int:image_id>')
-def image_viewer(image_id):
-    image = database.get_image_by_id(image_id)
-    if not image:
-        return "Image not found", 404
+@app.route('/api/image/<int:image_id>')
+def image_api(image_id):
+    image_record = database.get_image_by_id(image_id)
+    if not image_record:
+        return jsonify({'error': 'Image not found'}), 404
 
-    all_images = database.get_all_images(sort_by='date_taken', order='desc')
-    all_ids = [img['id'] for img in all_images]
+    image_data = dict(image_record)
 
-    current_index = all_ids.index(image_id)
+    # Handle next/previous navigation
+    context_ids_str = request.args.get('context', '')
+    if context_ids_str:
+        context_ids = [int(id) for id in context_ids_str.split(',')]
+        if image_id in context_ids:
+            current_index = context_ids.index(image_id)
+            prev_id = context_ids[current_index - 1] if current_index > 0 else None
+            next_id = context_ids[current_index + 1] if current_index < len(context_ids) - 1 else None
+            image_data['prev_id'] = prev_id
+            image_data['next_id'] = next_id
 
-    prev_id = all_ids[current_index - 1] if current_index > 0 else None
-    next_id = all_ids[current_index + 1] if current_index < len(all_ids) - 1 else None
+    # Add a URL for the full-size image
+    image_data['full_image_url'] = url_for('thumbnail', image_id=image_id) # For now, use thumbnail as full image
 
-    return render_template('image_viewer.html', image=image, prev_id=prev_id, next_id=next_id)
+    return jsonify(image_data)
 
 
 @app.route('/thumbnail/<int:image_id>')
