@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Settings</h1>
+    <a href="{{ url_for('index') }}">&larr; Back to Gallery</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Manage Photo Directories</div>
+    <div class="card-body">
+        <p>These are the directories the application is currently watching for photos.</p>
+        {% if image_dirs %}
+            <ul class="list-group mb-3">
+                {% for directory in image_dirs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ directory }}
+                        <form method="post" action="{{ url_for('settings') }}" style="display: inline;">
+                            <input type="hidden" name="action" value="remove_folder">
+                            <input type="hidden" name="folder_path" value="{{ directory }}">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this folder? This will delete its photos from the database.');">&times;</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="alert alert-warning">No photo directories have been configured.</div>
+        {% endif %}
+
+        <h5 class="card-title mt-4">Add a New Directory</h5>
+        <form method="post" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="add_folder">
+            <div class="form-group">
+                <label for="directory">New Directory Path</label>
+                <input type="text" class="form-control" id="directory" name="directory" placeholder="/path/to/your/photos" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add and Scan</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Library Actions</div>
+    <div class="card-body">
+        <h5 class="card-title">Rescan Library</h5>
+        <p class="card-text">Trigger a full rescan of all configured directories. This will find any new photos and remove any that have been deleted from your folders.</p>
+        <form method="post" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="rescan">
+            <button type="submit" class="btn btn-secondary">Rescan All Directories</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

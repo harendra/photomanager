@@ -77,6 +77,23 @@ def get_available_years():
     conn.close()
     return [row['year'] for row in years]
 
+def remove_images_by_path(folder_path):
+    """Removes all image records from the database that are in a specific folder."""
+    conn = get_db_connection()
+    # Use a wildcard to match all files in the folder and subfolders
+    path_pattern = f"{folder_path}%"
+    cursor = conn.execute("DELETE FROM images WHERE filepath LIKE ?", (path_pattern,))
+    print(f"Deleted {cursor.rowcount} records from path: {folder_path}")
+    conn.commit()
+    conn.close()
+
+def get_all_filepaths():
+    """Returns a set of all filepaths currently in the database."""
+    conn = get_db_connection()
+    paths = conn.execute("SELECT filepath FROM images").fetchall()
+    conn.close()
+    return {row['filepath'] for row in paths}
+
 def get_images_by_year(year):
     """Fetches all images from the database for a specific year."""
     conn = get_db_connection()
