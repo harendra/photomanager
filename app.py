@@ -71,7 +71,9 @@ def index():
         # Convert Row objects to dictionaries and add a month_name attribute for grouping
         for record in image_records:
             image_dict = dict(record)
-            dt_object = datetime.strptime(image_dict['date_taken'], '%Y-%m-%dT%H:%M:%S')
+            # Truncate fractional seconds before parsing
+            date_str = image_dict['date_taken'].split('.')[0]
+            dt_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
             image_dict['month_name'] = dt_object.strftime('%B')
             images.append(image_dict)
 
