@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Setup - Photo App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mt-4">
+            <div class="card-body">
+                <h1 class="card-title">Initial Setup</h1>
+                <p class="card-text">Welcome! To get started, please provide the full, absolute path to the directory containing your photos.</p>
+
+                <form method="post">
+                    <div class="form-group">
+                        <label for="directory">Photo Directory Path</label>
+                        <input type="text" class="form-control" id="directory" name="directory" placeholder="/Users/yourname/Pictures" required>
+                        <small class="form-text text-muted">The application will scan this directory and all its subdirectories for images.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save and Scan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

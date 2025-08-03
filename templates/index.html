@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Photo Gallery{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Photo Gallery</h1>
+</div>
+
+<form method="get" action="{{ url_for('index') }}" class="mb-4">
+    <div class="input-group">
+        <input type="search" name="query" class="form-control" placeholder="Search by tag (e.g., cat, outdoor)..." value="{{ request.args.get('query', '') }}">
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if request.args.get('query') %}
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+{% if not images %}
+    <div class="alert alert-info">
+        No images found. The application might still be scanning or the directory is empty.
+    </div>
+{% else %}
+    <div class="gallery">
+        {% for image in images %}
+        <div class="thumbnail">
+            <div class="card">
+                <a href="{{ url_for('image_viewer', image_id=image.id) }}">
+                    <img src="{{ url_for('thumbnail', image_id=image.id) }}" class="card-img-top" alt="{{ image.filename }}">
+                </a>
+                <div class="card-body">
+                    <p class="card-text text-truncate" title="{{ image.filename }}">{{ image.filename }}</p>
+                    <p class="card-text"><small class="text-muted">Taken: {{ image.date_taken.split('T')[0] }}</small></p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}
