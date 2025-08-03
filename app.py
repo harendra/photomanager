@@ -86,7 +86,8 @@ def thumbnail(image_id):
         try:
             with Image.open(image_record['filepath']) as img:
                 img.thumbnail(THUMBNAIL_SIZE)
-                img.save(thumbnail_path, 'JPEG')
+                # Convert to RGB before saving as JPEG to handle RGBA images (e.g. PNGs)
+                img.convert('RGB').save(thumbnail_path, 'JPEG')
         except FileNotFoundError:
             # If the original image is missing, create a placeholder
             img = Image.new('RGB', THUMBNAIL_SIZE, color = 'gray')
