@@ -28,7 +28,7 @@
             {% for image in images %}
             <div class="thumbnail">
                 <div class="card">
-                    <a href="{{ url_for('image_viewer', image_id=image.id) }}">
+                    <a href="{{ url_for('image_api', image_id=image.id) }}" class="photo-thumbnail-link" data-image-id="{{ image.id }}">
                         <img src="{{ url_for('thumbnail', image_id=image.id) }}" class="card-img-top" alt="{{ image.filename }}">
                     </a>
                     <div class="card-body">
