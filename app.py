@@ -67,7 +67,13 @@ def index():
 
     images = []
     if selected_year:
-        images = database.get_images_by_year(selected_year)
+        image_records = database.get_images_by_year(selected_year)
+        # Convert Row objects to dictionaries and add a month_name attribute for grouping
+        for record in image_records:
+            image_dict = dict(record)
+            dt_object = datetime.strptime(image_dict['date_taken'], '%Y-%m-%dT%H:%M:%S')
+            image_dict['month_name'] = dt_object.strftime('%B')
+            images.append(image_dict)
 
     return render_template('index.html', images=images, available_years=available_years, selected_year=selected_year)
 
