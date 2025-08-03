@@ -12,12 +12,10 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey' # Needed for flash messaging
 
 # Custom Jinja2 filter for parsing date strings
-def
-
-strptime(date_string, format):
+def strptime_filter(date_string, format):
     return datetime.strptime(date_string, format)
 
-app.jinja_env.filters['strptime'] = strptime
+app.jinja_env.filters['strptime'] = strptime_filter
 
 CONFIG_FILE = 'config.txt'
 IMAGE_DIR = ''
