@@ -111,7 +111,7 @@ def image_api(image_id):
             image_data['next_id'] = next_id
 
     # Add a URL for the full-size image
-    image_data['full_image_url'] = url_for('thumbnail', image_id=image_id) # For now, use thumbnail as full image
+    image_data['full_image_url'] = url_for('full_image', image_id=image_id)
 
     return jsonify(image_data)
 
@@ -137,6 +137,16 @@ def thumbnail(image_id):
             img.save(thumbnail_path, 'JPEG')
 
     return send_from_directory(THUMBNAIL_DIR, f"{image_id}.jpg")
+
+@app.route('/image/full/<int:image_id>')
+def full_image(image_id):
+    image_record = database.get_image_by_id(image_id)
+    if not image_record:
+        return "Image not found", 404
+
+    # Get directory and filename from the full path
+    directory, filename = os.path.split(image_record['filepath'])
+    return send_from_directory(directory, filename)
 
 def initial_setup():
     database.create_table()
