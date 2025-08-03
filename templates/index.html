@@ -23,8 +23,8 @@
         No images found for the selected year.
     </div>
 {% else %}
-    {% for month, items in images | groupby('date_taken[5:7]') %}
-        <h2 class="mt-5">{{ items[0].date_taken | strptime('%Y-%m-%dT%H:%M:%S') | strftime('%B') }}</h2>
+    {% for month, items in images | groupby('month_name') %}
+        <h2 class="mt-5">{{ month }}</h2>
         <hr>
         <div class="gallery">
             {% for image in items %}
