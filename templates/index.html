@@ -9,25 +9,38 @@
         <a href="{{ url_for('search') }}" class="btn btn-outline-primary mr-3">Search</a>
         <form method="get" action="{{ url_for('index') }}" class="form-inline">
             <label for="year-select" class="mr-2">Year:</label>
-            <select name="year" id="year-select" class="form-control" onchange="this.form.submit()">
+            <select name="year" id="year-select" class="form-control mr-2" onchange="this.form.submit()">
                 {% for year in available_years %}
                     <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                 {% endfor %}
             </select>
+
+            {% if selected_year %}
+            <label for="month-select" class="mr-2">Month:</label>
+            <select name="month" id="month-select" class="form-control" onchange="this.form.submit()">
+                <option value="">All Months</option>
+                {% for month_num in range(1, 13) %}
+                    <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>{{ month_num | month_name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
         </form>
     </div>
 </div>
 
+<p class="text-muted">Displaying {{ images|length }} image(s).</p>
+
 {% if not images %}
     <div class="alert alert-info">
-        No images found for the selected year.
+        No images found for the selected period.
     </div>
 {% else %}
-    {% for month, items in images | groupby('month_name') %}
-        <h2 class="mt-5">{{ month }}</h2>
+    {% if selected_month %}
+        {# If a month is selected, don't group, just show the header #}
+        <h2 class="mt-5">{{ selected_month | month_name }} ({{ images|length }} photos)</h2>
         <hr>
         <div class="gallery">
-            {% for image in items %}
+            {% for image in images %}
             <div class="thumbnail">
                 <div class="card">
                     <a href="{{ url_for('image_api', image_id=image.id) }}" class="photo-thumbnail-link" data-image-id="{{ image.id }}">
@@ -41,12 +54,38 @@
             </div>
             {% endfor %}
         </div>
-    {% endfor %}
+    {% else %}
+        {# If no month is selected, group by month #}
+        {% for month, items in images | groupby('month_name') %}
+            <h2 class="mt-5">{{ month }} ({{ items|length }} photos)</h2>
+            <hr>
+            <div class="gallery">
+                {% for image in items %}
+                <div class="thumbnail">
+                    <div class="card">
+                        <a href="{{ url_for('image_api', image_id=image.id) }}" class="photo-thumbnail-link" data-image-id="{{ image.id }}">
+                            <img src="{{ url_for('thumbnail', image_id=image.id) }}" class="card-img-top" alt="{{ image.filename }}">
+                        </a>
+                        <div class="card-body">
+                            <p class="card-text text-truncate" title="{{ image.filename }}">{{ image.filename }}</p>
+                            <p class="card-text"><small class="text-muted">Taken: {{ image.date_taken.split('T')[0] }}</small></p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% endif %}
 {% endif %}
 {% endblock %}
 
 {% block extra_head %}
-<style>
-    /* Add any additional styles if needed */
-</style>
+{# A little trick to get month names in Jinja #}
+<script>
+    function monthName(monthNum) {
+        const d = new Date();
+        d.setMonth(monthNum - 1);
+        return d.toLocaleString('en-US', { month: 'long' });
+    }
+</script>
 {% endblock %}

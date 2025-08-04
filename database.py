@@ -94,12 +94,19 @@ def get_all_filepaths():
     conn.close()
     return {row['filepath'] for row in paths}
 
-def get_images_by_year(year):
-    """Fetches all images from the database for a specific year."""
+def get_images_by_year_and_month(year, month=None):
+    """Fetches all images from the database for a specific year and optional month."""
     conn = get_db_connection()
-    # Using LIKE to match the start of the date_taken string
-    year_pattern = f"{year}%"
-    images = conn.execute("SELECT * FROM images WHERE date_taken LIKE ? ORDER BY date_taken ASC", (year_pattern,)).fetchall()
+
+    if month:
+        # Format month to two digits (e.g., 7 -> '07')
+        month_str = f"{month:02d}"
+        year_month_pattern = f"{year}-{month_str}%"
+        images = conn.execute("SELECT * FROM images WHERE date_taken LIKE ? ORDER BY date_taken ASC", (year_month_pattern,)).fetchall()
+    else:
+        year_pattern = f"{year}%"
+        images = conn.execute("SELECT * FROM images WHERE date_taken LIKE ? ORDER BY date_taken ASC", (year_pattern,)).fetchall()
+
     conn.close()
     return images
 
