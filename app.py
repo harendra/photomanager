@@ -12,6 +12,14 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = 'supersecretkey' # Needed for flash messaging
 
+# Global status object for scanning
+scan_status = {
+    'is_scanning': False,
+    'progress': 0,
+    'total': 0,
+    'message': 'Idle'
+}
+
 # Custom Jinja2 filter for parsing date strings
 def strptime_filter(date_string, format):
     return datetime.strptime(date_string, format)
@@ -22,6 +30,14 @@ def strftime_filter(date_obj, format):
     return date_obj.strftime(format)
 
 app.jinja_env.filters['strftime'] = strftime_filter
+
+def month_name_filter(month_num):
+    """Converts a month number to its name."""
+    if month_num:
+        return datetime(1900, month_num, 1).strftime('%B')
+    return ''
+
+app.jinja_env.filters['month_name'] = month_name_filter
 
 CONFIG_FILE = 'config.json'
 IMAGE_DIRS = []
@@ -49,10 +65,10 @@ def setup():
             save_config()
             flash('Configuration saved! Starting initial scan in the background...', 'success')
 
-            scan_thread = threading.Thread(target=scanner.scan_directories, args=(IMAGE_DIRS,), daemon=True)
+            scan_thread = threading.Thread(target=scanner.scan_directories, args=(IMAGE_DIRS, scan_status), daemon=True)
             scan_thread.start()
 
-            return redirect(url_for('index'))
+            return redirect(url_for('settings'))
         else:
             flash('The provided path is not a valid directory.', 'danger')
     return render_template('setup.html')
@@ -68,9 +84,11 @@ def index():
     if not selected_year and available_years:
         selected_year = available_years[0]
 
+    selected_month = request.args.get('month', type=int)
+
     images = []
     if selected_year:
-        image_records = database.get_images_by_year(selected_year)
+        image_records = database.get_images_by_year_and_month(selected_year, selected_month)
         for record in image_records:
             image_dict = dict(record)
             date_str = image_dict['date_taken'].split('.')[0]
@@ -78,7 +96,7 @@ def index():
             image_dict['month_name'] = dt_object.strftime('%B')
             images.append(image_dict)
 
-    return render_template('index.html', images=images, available_years=available_years, selected_year=selected_year)
+    return render_template('index.html', images=images, available_years=available_years, selected_year=selected_year, selected_month=selected_month)
 
 THUMBNAIL_DIR = 'static/thumbnails'
 
@@ -93,8 +111,7 @@ def settings():
                 IMAGE_DIRS.append(directory)
                 save_config()
                 flash(f"Added directory: {directory}. Scanning in the background.", 'success')
-                # Scan just the new directory
-                scan_thread = threading.Thread(target=scanner.scan_directories, args=([directory],), daemon=True)
+                scan_thread = threading.Thread(target=scanner.scan_directories, args=([directory], scan_status), daemon=True)
                 scan_thread.start()
 
         elif action == 'remove_folder':
@@ -107,12 +124,16 @@ def settings():
 
         elif action == 'rescan':
             flash("Started full library rescan in the background.", 'info')
-            scan_thread = threading.Thread(target=scanner.scan_directories, args=(IMAGE_DIRS,), daemon=True)
+            scan_thread = threading.Thread(target=scanner.scan_directories, args=(IMAGE_DIRS, scan_status), daemon=True)
             scan_thread.start()
 
         return redirect(url_for('settings'))
 
     return render_template('settings.html', image_dirs=IMAGE_DIRS)
+
+@app.route('/api/scan-status')
+def get_scan_status():
+    return jsonify(scan_status)
 
 @app.route('/search')
 def search():

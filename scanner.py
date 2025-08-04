@@ -2,6 +2,7 @@ import os
 from PIL import Image, UnidentifiedImageError
 from datetime import datetime
 import database
+import time
 
 # EXIF tag for date taken
 EXIF_DATE_TAG = 36867
@@ -50,18 +51,27 @@ def process_single_image(filepath):
         print(f"Error processing {filepath}: {e}")
     return None
 
-def scan_directories(dir_list):
+def scan_directories(dir_list, status_obj=None):
     """
     Performs a smart scan of all directories in the list.
     Adds new images, and removes images that are no longer on disk.
+    Updates a status object with progress.
     """
+    if status_obj:
+        status_obj['is_scanning'] = True
+        status_obj['message'] = 'Starting scan...'
+        status_obj['progress'] = 0
+        status_obj['total'] = 0
+
     print("Starting smart scan...")
     database.create_table()
 
     # 1. Get all filepaths from the database
+    if status_obj: status_obj['message'] = 'Fetching existing images from database...'
     db_filepaths = database.get_all_filepaths()
 
     # 2. Find all image files on disk
+    if status_obj: status_obj['message'] = 'Searching for image files on disk...'
     disk_filepaths = set()
     for directory in dir_list:
         if not os.path.isdir(directory):
@@ -72,13 +82,21 @@ def scan_directories(dir_list):
                     disk_filepaths.add(os.path.join(root, file))
 
     # 3. Determine what's new and what's deleted
-    new_files = disk_filepaths - db_filepaths
-    deleted_files = db_filepaths - disk_filepaths
+    new_files = list(disk_filepaths - db_filepaths)
+    deleted_files = list(db_filepaths - disk_filepaths)
+
+    total_ops = len(new_files) + len(deleted_files)
+    if status_obj:
+        status_obj['total'] = total_ops
+        status_obj['progress'] = 0
 
     # 4. Add new files to the database
     if new_files:
         print(f"Found {len(new_files)} new images to add.")
-        for filepath in new_files:
+        for i, filepath in enumerate(new_files):
+            if status_obj:
+                status_obj['message'] = f"Adding new image: {os.path.basename(filepath)}"
+                status_obj['progress'] += 1
             image_data = process_single_image(filepath)
             if image_data:
                 database.insert_image(image_data)
@@ -89,9 +107,15 @@ def scan_directories(dir_list):
         print(f"Found {len(deleted_files)} images to remove.")
         conn = database.get_db_connection()
         for filepath in deleted_files:
+            if status_obj:
+                status_obj['message'] = f"Removing missing image: {os.path.basename(filepath)}"
+                status_obj['progress'] += 1
             conn.execute("DELETE FROM images WHERE filepath = ?", (filepath,))
             print(f"Removed: {filepath}")
         conn.commit()
         conn.close()
 
+    if status_obj:
+        status_obj['is_scanning'] = False
+        status_obj['message'] = f"Scan complete. Found {len(new_files)} new images, removed {len(deleted_files)}."
     print("Smart scan complete.")
