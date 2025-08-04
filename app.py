@@ -110,8 +110,9 @@ def settings():
             if directory and os.path.isdir(directory) and directory not in IMAGE_DIRS:
                 IMAGE_DIRS.append(directory)
                 save_config()
-                flash(f"Added directory: {directory}. Scanning in the background.", 'success')
-                scan_thread = threading.Thread(target=scanner.scan_directories, args=([directory], scan_status), daemon=True)
+                flash(f"Added directory: {directory}. Scanning all directories for new files.", 'success')
+                # Always scan all directories to prevent deleting data from other folders
+                scan_thread = threading.Thread(target=scanner.scan_directories, args=(IMAGE_DIRS, scan_status), daemon=True)
                 scan_thread.start()
 
         elif action == 'remove_folder':
