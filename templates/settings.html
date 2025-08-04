@@ -33,8 +33,12 @@
         <form method="post" action="{{ url_for('settings') }}">
             <input type="hidden" name="action" value="add_folder">
             <div class="form-group">
-                <label for="directory">New Directory Path</label>
-                <input type="text" class="form-control" id="directory" name="directory" placeholder="/path/to/your/photos" required>
+                <label for="directory-input-settings">New Directory Path</label>
+                <input type="text" class="form-control" id="directory-input-settings" name="directory" placeholder="Select a folder or paste a path here..." required>
+            </div>
+            <div class="form-group">
+                <label for="folder-picker-settings" class="btn btn-info">Browse for Folder</label>
+                <input type="file" id="folder-picker-settings" webkitdirectory directory style="display: none;">
             </div>
             <button type="submit" class="btn btn-primary">Add and Scan</button>
         </form>
@@ -66,6 +70,15 @@
 
 {% block scripts %}
 <script>
+document.getElementById('folder-picker-settings').addEventListener('change', function(event) {
+    if (event.target.files.length > 0) {
+        const firstFile = event.target.files[0];
+        const relativePath = firstFile.webkitRelativePath;
+        const directoryPath = firstFile.path.substring(0, firstFile.path.length - relativePath.length);
+        document.getElementById('directory-input-settings').value = directoryPath;
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     const statusMessage = document.getElementById('scan-status-message');
     const progressBar = document.getElementById('scan-progress-bar');

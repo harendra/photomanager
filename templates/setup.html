@@ -12,14 +12,33 @@
 
                 <form method="post">
                     <div class="form-group">
-                        <label for="directory">Photo Directory Path</label>
-                        <input type="text" class="form-control" id="directory" name="directory" placeholder="/Users/yourname/Pictures" required>
-                        <small class="form-text text-muted">The application will scan this directory and all its subdirectories for images.</small>
-                    </div>
+    <label for="directory-input">Photo Directory Path</label>
+    <input type="text" class="form-control" id="directory-input" name="directory" placeholder="Select a folder or paste a path here..." required>
+    <small class="form-text text-muted">Use the button below to browse for a folder. This will scan the directory and all its subdirectories for images.</small>
+</div>
+<div class="form-group">
+    <label for="folder-picker" class="btn btn-info">Browse for Folder</label>
+    <input type="file" id="folder-picker" webkitdirectory directory style="display: none;">
+</div>
                     <button type="submit" class="btn btn-primary">Save and Scan</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('folder-picker').addEventListener('change', function(event) {
+    if (event.target.files.length > 0) {
+        // The path of the first file will contain the directory path.
+        // The `webkitRelativePath` includes the folder structure.
+        const firstFile = event.target.files[0];
+        const relativePath = firstFile.webkitRelativePath;
+        const directoryPath = firstFile.path.substring(0, firstFile.path.length - relativePath.length);
+        document.getElementById('directory-input').value = directoryPath;
+    }
+});
+</script>
 {% endblock %}
